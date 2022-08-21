@@ -9,6 +9,7 @@ import {
   GoogleAuthProvider,
   UserCredential,
   createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
 } from "@firebase/auth";
 
 import { app } from "./firebase";
@@ -32,13 +33,25 @@ const userState = atom<UserState>({
 //   dangerouslyAllowMutability: true,
 // });
 
+type ErrorMessage = string;
+
+const errorMessageState = atom<ErrorMessage>({
+  key: "errorMessage",
+  default: "",
+  dangerouslyAllowMutability: true,
+})
+
 // export const login = (): Promise<void> => {
-export const login = () => {
+export const googleLogin = () => {
   const provider = new GoogleAuthProvider();
   const auth = getAuth(app);
-  console.log('auth');
-  console.log(auth);
   return signInWithRedirect(auth, provider);
+};
+
+export const login = (email:string, password: string): Promise<UserCredential> => {
+  const auth = getAuth();
+  return signInWithEmailAndPassword(auth, email, password)
+    
 };
 
 export const logout = (): Promise<void> => {
@@ -90,3 +103,7 @@ export const useNewUserPassword = (): [string, SetterOrUpdater<string>] => {
     dangerouslyAllowMutability: true,
   }))
 };
+
+export const useErrorMessage = (): [ErrorMessage, SetterOrUpdater<ErrorMessage>] => {
+  return useRecoilState<ErrorMessage>(errorMessageState)
+}

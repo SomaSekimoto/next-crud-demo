@@ -2,23 +2,44 @@ import type { NextPage } from 'next'
 import Head from 'next/head'
 import styles from '../styles/Home.module.css'
 
-import { useUser, useNewUserEmail, useNewUserPassword, login, logout, register } from "../lib/auth";
+import {
+  useUser, useNewUserEmail, useNewUserPassword, useErrorMessage,
+  googleLogin, login, logout, register
+} from "../lib/auth";
 
 const Home: NextPage = () => {
-  const user = useUser();
-  const [newUserEmail, setNewUserEmail] = useNewUserEmail();
-  const [newUserPassword, setNewUserPassword] = useNewUserPassword();
+  const user = useUser()
+  const [newUserEmail, setNewUserEmail] = useNewUserEmail()
+  const [newUserPassword, setNewUserPassword] = useNewUserPassword()
+  const [errorMessage, setErrorMessage] = useErrorMessage()
 
-  const handleLogin = (): void => {
-    login().catch((error) => console.error(error));
+  const handleAuthError = (error: any): void =>{
+    handleAuthError(error)
+    console.log('Name:', error.name)
+    console.log('Code:', error.code)
+    console.log('Message:', error.message)
+    setErrorMessage(error.message)
+  }
+
+  const handleGoogleLogin = (): void => {
+    googleLogin().catch((error) => handleAuthError(error));
   };
+  const handleLogin = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => { 
+    e.preventDefault();
+    login(newUserEmail, newUserPassword)
+    .then(
+      (userCredentials)=>{
+        console.log('userCredentials')
+        console.log(userCredentials)
+      })
+    .catch((error) => handleAuthError(error));
+  }
 
   const handleLogout = (): void => {
-    logout().catch((error) => console.error(error));
+    logout().catch((error) => handleAuthError(error));
   };
 
   const handleRegister = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => { 
-    // register(newUser.email, newUser.password).catch((error) => console.error(error));
     e.preventDefault();
     register(newUserEmail, newUserPassword)
     .then(
@@ -26,12 +47,7 @@ const Home: NextPage = () => {
         console.log('userCredentials')
         console.log(userCredentials)
       })
-    .catch(
-      (error) => {
-        console.error(error)
-      });
-    
-
+    .catch((error) => handleAuthError(error));
   }
 
   const handleChangeEmail = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,13 +64,17 @@ const Home: NextPage = () => {
       </Head>
 
       <div>
+        {errorMessage != '' && (
+          <h1 className='bg-red-500 text-red'>{errorMessage}</h1>
+        )}
+        
         <h1>AuthDemo</h1>
         <div>
           {user !== null ? (
-                    <h2>ログインしている</h2>
-                  ) : (
-                    <h2>ログインしていない</h2>
-                  )}
+            <h2>ログインしている</h2>
+          ) : (
+            <h2>ログインしていない</h2>
+          )}
           <div>
             <h2>current user</h2>
             <p>{user?.email}</p>
@@ -91,7 +111,11 @@ const Home: NextPage = () => {
               <p className="text-red-500 text-xs italic">Please choose a password.</p>
             </div>
             <div className="flex items-center justify-between">
-              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+              <button
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                type="button"
+                onClick={handleLogin}
+              >
                 Sign In
               </button>
               <a className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800" href="#">
@@ -115,7 +139,7 @@ const Home: NextPage = () => {
               <div className="flex items-center justify-between">
                 <button 
                   className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                  onClick={handleLogin}
+                  onClick={handleGoogleLogin}
                   type="button"
                 >
                   Google
